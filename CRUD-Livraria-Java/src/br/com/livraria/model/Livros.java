@@ -11,7 +11,6 @@ public class Livros {
 	private int estoque;
 	private String sinopse;
 	private double preco;
-	private int qtdLivrosVendidos;
 	
 	public Livros(String nome, String estilo, int estoque, String sinopse, double preco) {
 		this.setNome(nome);
@@ -19,7 +18,6 @@ public class Livros {
 		this.estoque = estoque;
 		this.setSinopse(sinopse);
 		this.setPreco(preco);
-		this.qtdLivrosVendidos = 0;
 	}
 	
 	
@@ -71,17 +69,6 @@ public class Livros {
 		this.preco = preco;
 	}
 	
-	public int getQtdLivrosVendidos() {
-		return qtdLivrosVendidos;
-	}
-	
-	// ENTRA QUANTOS LIVROS VENDEU A MAIS, A FUNÇÃO JÁ FAZ A SOMA AUTOMATICAMENTE
-	public void setQtdLivrosVendidos(int novosLivrosVendidos) {
-				
-		int novaQtdLivrosVendidos = this.getQtdLivrosVendidos() + novosLivrosVendidos;		
-		
-		this.qtdLivrosVendidos = novaQtdLivrosVendidos;		
-	}
 	
 	
 }

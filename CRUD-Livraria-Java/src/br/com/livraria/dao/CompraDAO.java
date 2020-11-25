@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.com.livraria.factory.ConnectionFactory;
-import br.com.livraria.model.*;
+import br.com.livraria.model.Compras;
  
 public class CompraDAO {
 	
@@ -32,17 +32,7 @@ public class CompraDAO {
 			
 			
 			LivroDAO livrodao = new LivroDAO();
-			
-			livrodao.updateQuantidadeVendidos(compra.getIdlivro(), 1);
-
-			
-			livrodao.updateEstoque(compra.getIdlivro(), -1);
-			
-			ClienteDAO clientedao = new ClienteDAO();
-			
-			clientedao.updateQtdLivrosComprados(compra.getIdcliente(), 1);
-
-			
+			livrodao.updateEstoque(compra.getIdlivro(), -1);	
 			
 			pstm.execute();
 
@@ -74,16 +64,10 @@ public class CompraDAO {
 			conn = ConnectionFactory.createConnectionToMySQL();
 			pstm = (PreparedStatement) conn.prepareStatement(sql);
 			
-			int idLivro = getCompras(idcompra).getIdlivro();
-			int idCliente = getCompras(idcompra).getIdcliente();
-			
-			ClienteDAO clientedao = new ClienteDAO();
-			clientedao.updateQtdLivrosComprados(idCliente, -1);
+			int idLivro = getCompras(idcompra).getIdlivro();			
 			
 			LivroDAO livrodao = new LivroDAO();
-			livrodao.updateEstoque(idLivro, +1);
-			livrodao.updateQuantidadeVendidos(idLivro, -1);
-			
+			livrodao.updateEstoque(idLivro, +1);			
 			
 			pstm.setInt(1, idcompra);
 			pstm.execute();
@@ -103,58 +87,88 @@ public class CompraDAO {
 		
 	}
 	
-//	SELECIONA COMPRA EM UMA DATA ESPECÍFICA
-	public Compras getCompras(int idcompra) {
+	//	SELECIONA COMPRA EM UMA DATA ESPECÍFICA
+	public static List<Compras> verComprasCliente(int idcliente){
+		String sql = "SELECT * FROM compras comp JOIN clientes c JOIN livros l ON comp.idcliente = ?";
 		
-		String sql = "SELECT * FROM compras WHERE idcompra = ? ORDER BY data";
+		List<Compras> compras = new ArrayList<Compras>();
+
 		
 		Connection conn = null;
 		PreparedStatement pstm = null;
 		ResultSet rset = null;
 		
-		//apenas criando a compra, todos os valores serão substituidos.
-		Compras compra = new Compras(new Date(0), 1, 1, 1);
-		
 		try {
-			
 			conn = ConnectionFactory.createConnectionToMySQL();
 			pstm = (PreparedStatement) conn.prepareStatement(sql);
-			
-			pstm.setInt(1, idcompra);
-			
+			pstm.setInt(1, idcliente);
 			rset = pstm.executeQuery();
 			
 			while(rset.next()) {
 				
-				if(rset.getInt("idcompra") == idcompra) {
-					compra.setData(rset.getDate("data"));
-					compra.setIdlivro(rset.getInt("idlivro"));
-					compra.setIdcliente(rset.getInt("idcliente"));
+					Compras compra = new Compras(rset.getDate("data"), rset.getInt("idcliente"), rset.getInt("idlivro"), rset.getDouble("valor"));
 					compra.setCondicaoConta(rset.getString("condicao"));
-					compra.setValor(rset.getDouble("valor"));
-					break;
-				}
-				
+					compras.add(compra);
 			}
 			
 		}catch(Exception e) {
 			e.printStackTrace();
 		}finally {
 			try {
-				if(conn != null) 
+				if(conn != null)
 					conn.close();
 				if(pstm != null)
 					pstm.close();
-			}catch(Exception e) {
+			}catch(Exception e) {				
 				e.printStackTrace();
 			}
 		}
 		
-		return compra;
-		
-	}
+		return compras;
+	}	
 
-//	SELECIONA COMPRAS ENTRE DUAS DATAS
+	
+	public static List<Compras> verComprasLivro(int idlivro){
+		String sql = "SELECT * FROM compras comp JOIN clientes c JOIN livros l ON c.livrosComprados = l.idlivro and comp.idlivro = ?";
+		
+		List<Compras> compras = new ArrayList<Compras>();
+
+		
+		Connection conn = null;
+		PreparedStatement pstm = null;
+		ResultSet rset = null;
+		
+		try {
+			conn = ConnectionFactory.createConnectionToMySQL();
+			pstm = (PreparedStatement) conn.prepareStatement(sql);
+			pstm.setInt(1, idlivro);
+			rset = pstm.executeQuery();
+			
+			while(rset.next()) {
+				
+					Compras compra = new Compras(rset.getDate("data"), rset.getInt("idcliente"), rset.getInt("idlivro"), rset.getDouble("valor"));
+					compra.setCondicaoConta(rset.getString("condicao"));
+					compras.add(compra);
+			}
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				if(conn != null)
+					conn.close();
+				if(pstm != null)
+					pstm.close();
+			}catch(Exception e) {				
+				e.printStackTrace();
+			}
+		}
+		
+		return compras;
+	}	
+
+	
+	//	SELECIONA COMPRAS ENTRE DUAS DATAS
 	public static List<Compras> getCompras(Date dataInicial, Date dataFinal) {
 		
 		String sql = "SELECT * FROM compras WHERE data BETWEEN ? AND ? ORDER BY data";
@@ -199,50 +213,109 @@ public class CompraDAO {
 		return compras;
 	}
 	
-	public static List<Compras> getComprasCliente(int idcliente) {
+	public static Compras getCompras(int idcompra) {
 		
-		String sql = "SELECT * FROM compras WHERE idcliente = ?";
+		String sql = "SELECT * FROM compras WHERE idcompra = ?";
 		
 		Connection conn = null;
 		PreparedStatement pstm = null;
 		ResultSet rset = null;
-		
-		List <Compras> compras = new ArrayList<Compras>();
-		
+				
+		Compras compra = new Compras(new Date (0), 0, 0, 0);
+
 		try {
+			
 			conn = ConnectionFactory.createConnectionToMySQL();
 			pstm = (PreparedStatement) conn.prepareStatement(sql);
-			
-			pstm.setInt(1, idcliente);
-			
+			pstm.setInt(1, idcompra); 
 			rset = pstm.executeQuery();
-			
+						
 			while(rset.next()) {
-				if(rset.getInt("idcliente") == idcliente) {
-					Compras compra = new Compras(rset.getDate("data"), rset.getInt("idcliente"), rset.getInt("idlivro"), rset.getDouble("valor"));
-					compra.setIdcompra(rset.getInt("idcompra"));
+				
+				if(rset.getInt("idcompra") == idcompra) {
 					compra.setCondicaoConta(rset.getString("condicao"));
-					compras.add(compra);
+					compra.setData(rset.getDate("data"));
+					compra.setIdcliente(rset.getInt("idcliente"));
+					compra.setIdcompra(rset.getInt("idcompra"));
+					compra.setIdlivro(rset.getInt("idlivro"));
+					compra.setValor(rset.getDouble("valor"));
+					break;
 				}
+				
 			}
 			
 		}catch(Exception e) {
 			e.printStackTrace();
 		}finally {
 			try {
-				if(conn != null) {
-					conn.close();
-				}if(pstm != null) {
+				if(pstm != null) 
 					pstm.close();
-				}
+				if(conn != null)
+					conn.close();
 			}catch(Exception e) {
 				e.printStackTrace();
 			}
 		}
 		
-		return compras;
+		return compra;
+		
 	}
 	
+	public static void deletarComprasCliente(int idcliente) {
+		
+		String sql = "DELETE FROM COMPRAS WHERE idcliente = ?";
+		
+		Connection conn = null;
+		PreparedStatement pstm = null;
+		
+		try {
+			conn = ConnectionFactory.createConnectionToMySQL();
+			pstm = conn.prepareStatement(sql);
+			
+			pstm.setInt(1, idcliente);
+			pstm.execute();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				if(conn != null)
+					conn.close();
+				if(pstm != null)
+					pstm.close();
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		
+		
+	}
+	
+	public static void deletarTodasCompras() {
+
+		String sql = "TRUNCATE compras";
+		Connection conn = null;
+		PreparedStatement pstm = null;
+		
+		try {
+			conn = ConnectionFactory.createConnectionToMySQL();
+			pstm = (PreparedStatement) conn.prepareStatement(sql);
+			
+			pstm.execute();
+		}catch(Exception e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				if(conn != null)
+					conn.close();
+				if(pstm != null)
+					pstm.close();
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 }
 
 

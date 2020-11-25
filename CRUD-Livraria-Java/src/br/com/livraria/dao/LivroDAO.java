@@ -75,7 +75,6 @@ public class LivroDAO {
 
 				Livros livro = new Livros(rset.getString("nome"), rset.getString("estilo"),	rset.getInt("estoque"), rset.getString("sinopse"), rset.getDouble("preco"));
 				livro.setIdlivro(rset.getInt("idlivro"));
-				livro.setQtdLivrosVendidos(rset.getInt("qtdvendidos"));
 				livros.add(livro);
 				}
 		}catch(Exception e) {
@@ -122,7 +121,6 @@ public class LivroDAO {
 					livro.setEstoque(rset.getInt("estoque"));
 					livro.setSinopse(rset.getString("sinopse"));
 					livro.setPreco(rset.getDouble("preco"));
-					livro.setQtdLivrosVendidos(rset.getInt("qtdvendidos"));
 					break;
 				}
 				
@@ -219,44 +217,6 @@ public class LivroDAO {
 		
 	}
 
-	//Altera a quantidade de livros vendidas (essa função é chamada quando compra algum livro)
-	public void updateQuantidadeVendidos(int idlivro, int novosLivrosVendidos) {
-		
-		String sql = "UPDATE livros SET qtdvendidos = ? WHERE idlivro = ?";
-		
-		Connection conn = null;
-		PreparedStatement pstm = null;
-		
-		try {
-			conn = ConnectionFactory.createConnectionToMySQL();
-			pstm = (PreparedStatement) conn.prepareStatement(sql);
-			
-			Livros livro = new Livros("Todos os valores aqui vao receber o valor do livro selecionado", "", 1,"",1);
-			livro = getLivros(idlivro);			
-			
-			livro.setQtdLivrosVendidos(novosLivrosVendidos);
-			
-			int quantidadeVendidaTotal = livro.getQtdLivrosVendidos();
-			
-			pstm.setInt(1, quantidadeVendidaTotal);
-			pstm.setInt(2, idlivro);
-			
-			pstm.execute();
-			
-		}catch(Exception e) {
-			e.printStackTrace();
-		}finally {
-			try {
-				if(conn != null)
-					conn.close();
-				if(pstm != null)
-					pstm.close();
-			}catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
 	//Deletar um livro
 	public static void deletarLivro(int idlivro) {
 		
@@ -315,6 +275,85 @@ public class LivroDAO {
 				e.printStackTrace();
 			}
 		}
+		
+	}
+	
+	public static List<Livros> pesquisarLivros(String nomeLivro){
+		
+		String sql = "SELECT * FROM livros WHERE nome LIKE ?";
+		List<Livros> livros = new ArrayList<Livros>();
+		
+		Connection conn = null;
+		PreparedStatement pstm = null;
+		ResultSet rset = null;
+		
+		try {
+			conn = ConnectionFactory.createConnectionToMySQL();
+			pstm = (PreparedStatement) conn.prepareStatement(sql);
+			pstm.setString(1, "%" +nomeLivro + "%");
+			
+			rset = pstm.executeQuery();
+			
+			while(rset.next()) {
+				Livros livro = new Livros(rset.getString("nome"), rset.getString("estilo"),	rset.getInt("estoque"), rset.getString("sinopse"), rset.getDouble("preco"));
+				livro.setIdlivro(rset.getInt("idlivro"));
+				livros.add(livro);
+			}
+			
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+		}finally {
+		
+			try {
+				if(conn != null)
+					conn.close();
+				if(pstm != null)
+					pstm.close();
+			}catch(Exception e) {
+				e.printStackTrace();
+			}			
+		}
+		
+		
+		return livros;
+	}
+
+	public static int qtdVendidos(int idlivro) {
+		
+		String sql = "SELECT COUNT(*) FROM compras WHERE idlivro = ?";
+		int qtdVendidos = 0;
+		Connection conn = null;
+		PreparedStatement pstm = null;
+		ResultSet rset = null;
+		
+		try {
+			conn = ConnectionFactory.createConnectionToMySQL();
+			pstm = (PreparedStatement) conn.prepareStatement(sql);
+			pstm.setInt(1, idlivro);
+			
+			rset = pstm.executeQuery();
+			
+			while(rset.next()) {
+				qtdVendidos = rset.getInt("COUNT(*)");
+			}
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				if(conn!=null) {
+					conn.close();
+				}
+				if(pstm != null) {
+					pstm.close();
+				}
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return qtdVendidos;
 		
 	}
 	
