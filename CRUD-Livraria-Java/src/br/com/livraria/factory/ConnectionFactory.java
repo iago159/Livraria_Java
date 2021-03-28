@@ -24,7 +24,7 @@ public class ConnectionFactory {
 		
 		//Cria a conexão com o banco de dados
 		Connection connection = DriverManager.getConnection(DATABASE_URL, USERNAME, PASSWORD);
-		
+	
 		return connection;
 		}
 	
@@ -35,7 +35,7 @@ public class ConnectionFactory {
 		
 		//Testar se a conexão é nula
 		if(con != null) {
-			System.out.println(con);
+			System.out.println("Conexão obtida com sucesso!");
 			con.close();
 		}
 		

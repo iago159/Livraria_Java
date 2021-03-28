@@ -27,6 +27,7 @@ public class ClienteDAO {
 		//CÓDIGO NA LINGUAGEM SQL
 		String sql = "INSERT INTO clientes(sexo, nome) VALUES (?,?)";
 		
+		
 		//CRIA UMA VARIÁVEL QUE VAI RECEBER CONEXÃO
 		Connection conn = null;
 		
@@ -98,6 +99,8 @@ public class ClienteDAO {
 				//recuperando os dados de cada cliente
 				Clientes cliente = new Clientes(rset.getString("nome"), rset.getString("sexo"));
 				cliente.setIdcliente(rset.getInt("idcliente"));
+				cliente.setLivrosComprados(rset.getInt("livrosComprados"));
+				cliente.setQtdLivrosComprados(rset.getInt("qtdlivroscomprados"));
 				cliente.setCondicaoConta(rset.getString("condicao"));
 				//Adiciona o cliente no array de clientes
 				clientes.add(cliente);
@@ -150,6 +153,8 @@ public class ClienteDAO {
 					cliente.setIdcliente(idcliente);
 					cliente.setNome(rset.getString("nome"));
 					cliente.setSexo(rset.getString("sexo"));
+					cliente.setLivrosComprados(rset.getInt("livrosComprados"));
+					cliente.setQtdLivrosComprados(rset.getInt("qtdlivroscomprados")); 
 					cliente.setCondicaoConta(rset.getString("condicao"));
 					break;
 				}
@@ -171,41 +176,6 @@ public class ClienteDAO {
 		
 		return cliente;
 		
-	}
-
-	//RETORNA O ID DO ULTIMO CLIENTE REGISTRADO
-	public static int getIdClientes() {
-		
-		String sql = "SELECT * FROM clientes ORDER BY idcliente DESC LIMIT 1;";
-		
-		int idCliente = 0;
-		
-		Connection conn = null;
-		PreparedStatement pstm = null;
-		ResultSet rset = null;
-		
-		try {
-			
-			conn = ConnectionFactory.createConnectionToMySQL();
-			pstm = (PreparedStatement) conn.prepareStatement(sql);
-			rset = pstm.executeQuery();
-
-			while(rset.next()) {
-				idCliente = rset.getInt("idcliente");
-			}
-		}catch(Exception e) {
-			e.printStackTrace();
-		}finally {
-			try {
-				if(conn != null)
-					conn.close();
-				if(pstm != null) 
-					pstm.close();
-			}catch(Exception e) {
-				e.printStackTrace();
-			}
-		}
-		return idCliente;
 	}
 	
 	//UPDATE (muda-se o nome e o sexo do cliente)
@@ -241,24 +211,35 @@ public class ClienteDAO {
 		
 	}
 
-	public static int qtdLivrosComprados(int idcliente) {
-		String sql = "SELECT COUNT(*) FROM compras WHERE idcliente = ?";
+	//UPDATE 2 (apenas adciona-se livros ao cliente quando a classe comprar é ativada)
+	public void updateQtdLivrosComprados(int idcliente, int qtdNovosLivrosComprados) {
+		
+		String sql = "UPDATE clientes SET qtdlivroscomprados = ? WHERE idcliente = ?";
 		
 		Connection conn = null;
 		PreparedStatement pstm = null;
-		ResultSet rset = null;
-		int qtdComprados = 0;
 		
 		try {
 			conn = ConnectionFactory.createConnectionToMySQL();
 			pstm = (PreparedStatement) conn.prepareStatement(sql);
-			pstm.setInt(1, idcliente);
 			
-			rset = pstm.executeQuery();
+	
+//			//CRIA UM NOVO CLIENTE QUE VAI RECEBER A NOVA QUANTIDADE DE LIVROS COMPRADAS
+			Clientes cliente = new Clientes("Vai ser substituido", "Vai ser substituido");
 			
-			while(rset.next()) {
-				qtdComprados = rset.getInt("COUNT(*)");
-			}
+			//O GETCLIENTES RECEBE UM ID E SE TRANSFORMA NO CLIENTE COM ESSE ID, E O CLIENTE CRIADO RECEBE SE TRANSFORMARÁ NO GETCLIENTES
+			cliente = getClientes(idcliente);			
+			
+			//PASSA A NOVA QUANTIDADE DE LIVROS COMPRADOS PARA O CLIENTE
+			cliente.setQtdLivrosComprados(qtdNovosLivrosComprados);
+			
+			//PASSA PARA A QUANTIDADE DE LIVROS COMPRADOS PARA CÓDIGO SQL
+			pstm.setInt(1, cliente.getQtdLivrosComprados());
+			
+			//PASSA O ID DO CLIENTE PARA O CÓDICO SQL
+			pstm.setInt(2, idcliente);			
+			
+			pstm.execute();						
 			
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -272,8 +253,6 @@ public class ClienteDAO {
 				e.printStackTrace();
 			}
 		}
-		
-		return qtdComprados;
 		
 	}
 	
@@ -406,6 +385,5 @@ public class ClienteDAO {
 		
 	}	
 
-	
 	
 }
